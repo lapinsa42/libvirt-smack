@@ -1,0 +1,12 @@
+--- a/libvirt-1.1.4/src/util/vircommand.h	2013-10-29 16:27:14.000000000 +0800
++++ b/libvirt-1.1.4/src/util/vircommand.h	2015-03-20 21:59:25.280911038 +0800
+@@ -82,6 +82,9 @@
+ void virCommandSetAppArmorProfile(virCommandPtr cmd,
+                                   const char *profile);
+ 
++void virCommandSetSmackLabel(virCommandPtr cmd,
++                               const char *label);
++
+ void virCommandDaemonize(virCommandPtr cmd);
+ 
+ void virCommandNonblockingFDs(virCommandPtr cmd);

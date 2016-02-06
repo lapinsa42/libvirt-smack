@@ -1,0 +1,51 @@
+--- a/libvirt-1.1.4/m4/virt-smack.m4	1970-01-01 07:00:00.000000000 +0700
++++ b/libvirt-1.1.4/m4/virt-smack.m4	2015-03-20 21:59:25.264911508 +0800
+@@ -0,0 +1,48 @@
++dnl The libsmack.so library
++dnl
++dnl Copyright (C) 2013 changyaoh. 
++dnl
++dnl This library is free software; you can redistribute it and/or
++dnl modify it under the terms of the GNU Lesser General Public
++dnl License as published by the Free Software Foundation; either
++dnl version 2.1 of the License, or (at your option) any later version.
++dnl
++dnl This library is distributed in the hope that it will be useful,
++dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
++dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++dnl Lesser General Public License for more details.
++dnl
++dnl You should have received a copy of the GNU Lesser General Public
++dnl License along with this library.  If not, see
++dnl <http://www.gnu.org/licenses/>.
++dnl
++
++AC_DEFUN([LIBVIRT_CHECK_SMACK],[
++  LIBVIRT_CHECK_LIB([SMACK], [smack],
++                    [smack_set_label_for_self], [sys/smack.h])
++
++  AC_ARG_WITH([smack_mount],
++    [AS_HELP_STRING([--with-smack-mount],
++      [set Smack mount point @<:@default=check@:>@])],
++    [],
++    [with_smack_mount=check])
++
++  if test "$with_smack" = "yes"; then
++    AC_MSG_CHECKING([Smack mount point])
++    if test "$with_smack_mount" = "check" || test -z "$with_smack_mount"; then
++      if test -d /sys/fs/smackfs ; then
++        SMACKFSMNT=/sys/fs/smackfs
++      else
++        SMACKFSMNT=/smack
++      fi
++    else
++      SMACKFSMNT=$with_smack_mount
++    fi
++    AC_MSG_RESULT([$SMACK_MOUNT])
++    AC_DEFINE_UNQUOTED([SMACK_MOUNT], ["$SMACK_MOUNT"], [Smack mount point])
++  fi
++])
++
++AC_DEFUN([LIBVIRT_RESULT_SMACK],[
++  LIBVIRT_RESULT_LIB([SMACK])
++])

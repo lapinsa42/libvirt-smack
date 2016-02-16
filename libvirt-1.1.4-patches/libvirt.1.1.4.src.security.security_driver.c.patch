@@ -1,0 +1,23 @@
+--- a/libvirt-1.1.4/src/security/security_driver.c	2013-07-12 20:03:59.000000000 +0800
++++ b/libvirt-1.1.4/src/security/security_driver.c	2015-03-20 21:59:25.268911390 +0800
+@@ -35,6 +35,10 @@
+ # include "security_apparmor.h"
+ #endif
+ 
++#ifdef WITH_SECDRIVER_SMACK
++# include "security_smack.h"
++#endif
++
+ #include "security_nop.h"
+ 
+ #define VIR_FROM_THIS VIR_FROM_SECURITY
+@@ -46,6 +50,9 @@
+ #ifdef WITH_SECDRIVER_APPARMOR
+     &virAppArmorSecurityDriver,
+ #endif
++#ifdef WITH_SECDRIVER_SMACK
++    &virSmackSecurityDriver,
++#endif
+     &virSecurityDriverNop, /* Must always be last, since it will always probe */
+ };
+ 

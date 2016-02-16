@@ -1,0 +1,54 @@
+--- a/libvirt-1.1.4/configure.ac	2013-11-04 11:25:19.000000000 +0800
++++ b/libvirt-1.1.4/configure.ac	2015-03-20 21:59:25.262911567 +0800
+@@ -237,6 +237,7 @@
+ LIBVIRT_CHECK_SANLOCK
+ LIBVIRT_CHECK_SASL
+ LIBVIRT_CHECK_SELINUX
++LIBVIRT_CHECK_SMACK
+ LIBVIRT_CHECK_SSH2
+ LIBVIRT_CHECK_UDEV
+ LIBVIRT_CHECK_YAJL
+@@ -1418,6 +1419,27 @@
+ AM_CONDITIONAL([WITH_SECDRIVER_APPARMOR], [test "$with_secdriver_apparmor" != "no"])
+ 
+ 
++AC_ARG_WITH([secdriver-smack],
++  [AS_HELP_STRING([--with-secdriver-smack],
++    [use Smack security driver @<:@default=check@:>@])],
++  [],
++  [with_secdriver_smack=check])
++
++if test "$with_smack" != "yes" ; then
++  if test "$with_secdriver_smack" = "check" ; then
++    with_secdriver_smack=no
++  fi
++  if test "$with_secdriver_smack" != "no" ; then
++    AC_MSG_ERROR([You must install the Smack development package in order to compile libvirt])
++  fi
++elif test "with_secdriver_smack" != "no" ; then
++  with_secdriver_smack=yes
++  AC_DEFINE_UNQUOTED([WITH_SECDRIVER_SMACK], 1, [whether Smack security driver is available])
++fi
++AM_CONDITIONAL([WITH_SECDRIVER_SMACK], [test "$with_secdriver_smack" != "no"])
++
++
++
+ dnl DTrace static probes
+ AC_ARG_WITH([dtrace],
+   [AS_HELP_STRING([--with-dtrace],
+@@ -2672,6 +2694,7 @@
+ AC_MSG_NOTICE([])
+ AC_MSG_NOTICE([ SELinux: $with_secdriver_selinux ($SELINUX_MOUNT)])
+ AC_MSG_NOTICE([AppArmor: $with_secdriver_apparmor])
++AC_MSG_NOTICE([Smack: $with_secdriver_smack])
+ AC_MSG_NOTICE([])
+ AC_MSG_NOTICE([Driver Loadable Modules])
+ AC_MSG_NOTICE([])
+@@ -2701,6 +2724,7 @@
+ LIBVIRT_RESULT_SANLOCK
+ LIBVIRT_RESULT_SASL
+ LIBVIRT_RESULT_SELINUX
++LIBVIRT_RESULT_SMACK
+ LIBVIRT_RESULT_SSH2
+ LIBVIRT_RESULT_UDEV
+ LIBVIRT_RESULT_YAJL

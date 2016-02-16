@@ -1,0 +1,44 @@
+--- a/libvirt-1.1.4/src/Makefile.am	2013-10-29 16:27:14.000000000 +0800
++++ b/libvirt-1.1.4/src/Makefile.am	2015-03-20 21:59:25.266911449 +0800
+@@ -59,6 +59,11 @@
+ SECDRIVER_CFLAGS += $(APPARMOR_CFLAGS)
+ SECDRIVER_LIBS += $(APPARMOR_LIBS)
+ endif WITH_SECDRIVER_APPARMOR
++if WITH_SECDRIVER_SMACK
++SECDRIVER_CFLAGS += $(SMACK_CFLAGS)
++SECDRIVER_LIBS += $(SMACK_LIBS)
++endif WITH_SECDRIVER_SMACK
++
+ 
+ if WITH_NETWORK
+ UUID=$(shell uuidgen 2>/dev/null)
+@@ -852,6 +857,9 @@
+ SECURITY_DRIVER_APPARMOR_SOURCES =				\
+ 		security/security_apparmor.h security/security_apparmor.c
+ 
++SECURITY_DRIVER_SMACK_SOURCES =				\
++		security/security_smack.h security/security_smack.c
++
+ ACCESS_DRIVER_GENERATED = \
+ 		access/viraccessapicheck.h \
+ 		access/viraccessapicheck.c \
+@@ -1512,6 +1520,11 @@
+ libvirt_security_manager_la_SOURCES += $(SECURITY_DRIVER_APPARMOR_SOURCES)
+ libvirt_security_manager_la_CFLAGS += $(APPARMOR_CFLAGS)
+ endif WITH_SECDRIVER_APPARMOR
++if WITH_SECDRIVER_SMACK
++libvirt_security_manager_la_SOURCES += $(SECURITY_DRIVER_SMACK_SOURCES)
++libvirt_security_manager_la_CFLAGS += $(SMACK_CFLAGS)
++endif WITH_SECDRIVER_SMACK
++
+ 
+ libvirt_driver_access_la_SOURCES = \
+ 	$(ACCESS_DRIVER_SOURCES) $(ACCESS_DRIVER_GENERATED)
+@@ -1640,6 +1653,7 @@
+ 		$(NWFILTER_DRIVER_SOURCES)			\
+ 		$(SECURITY_DRIVER_SELINUX_SOURCES)		\
+ 		$(SECURITY_DRIVER_APPARMOR_SOURCES)		\
++		$(SECURITY_DRIVER_SMACK_SOURCES)		\
+ 		$(SECRET_DRIVER_SOURCES)			\
+ 		$(VBOX_DRIVER_EXTRA_DIST)			\
+ 		$(VMWARE_DRIVER_SOURCES)			\

@@ -1,0 +1,146 @@
+--- a/libvirt-1.1.4/src/util/vircommand.c	2013-10-29 16:27:14.000000000 +0800
++++ b/libvirt-1.1.4/src/util/vircommand.c	2015-03-20 21:59:25.278911097 +0800
+@@ -39,6 +39,9 @@
+ #if defined(WITH_SECDRIVER_APPARMOR)
+ # include <sys/apparmor.h>
+ #endif
++#if defined(WITH_SECDRIVER_SMACK)
++# include <sys/smack.h>
++#endif
+ 
+ #include "vircommand.h"
+ #include "viralloc.h"
+@@ -127,6 +130,10 @@
+ #if defined(WITH_SECDRIVER_APPARMOR)
+     char *appArmorProfile;
+ #endif
++#if defined(WITH_SECDRIVER_SMACK)
++    char *smackLabel;
++#endif
++
+ };
+ 
+ /*
+@@ -412,6 +419,8 @@
+     gid_t *groups = NULL;
+     int ngroups;
+ 
++    //char *label=NULL;
++
+     if (cmd->args[0][0] != '/') {
+         if (!(binary = binarystr = virFindFileInPath(cmd->args[0]))) {
+             virReportSystemError(ENOENT,
+@@ -423,6 +432,8 @@
+         binary = cmd->args[0];
+     }
+ 
++    //VIR_DEBUG("binary is %s",binary);
++
+     if (childin < 0) {
+         if (getDevNull(&null) < 0)
+             goto cleanup;
+@@ -660,6 +671,30 @@
+     }
+ # endif
+ 
++# if defined(WITH_SECDRIVER_SMACK)
++    if (cmd->smackLabel) {
++        VIR_DEBUG("Setting child security label to %s", cmd->smackLabel);
++
++        if (smack_set_label_for_self(cmd->smackLabel) < 0) {
++            virReportSystemError(errno,
++                                 _("unable to set Smack label '%s' "
++                                   "for '%s'"),
++                                 cmd->smackLabel, cmd->args[0]);
++            goto fork_error;
++        }
++    }
++# endif
++
++/*
++ *    if (smack_new_label_from_self(&label) == -1)
++ *    {
++ *            goto fork_error;
++ *    }
++ *    VIR_DEBUG("smack label is %s",label);
++ *    free(label);
++ *
++ *
++ */
+     /* The steps above may need to do something privileged, so we delay
+      * setuid and clearing capabilities until the last minute.
+      */
+@@ -692,14 +727,19 @@
+         goto fork_error;
+     }
+ 
++
++    //VIR_DEBUG("binary %s %s %s",binary,*(cmd->args),*(cmd->env));
++
+     /* Close logging again to ensure no FDs leak to child */
+     virLogReset();
+ 
++
+     if (cmd->env)
+         execve(binary, cmd->args, cmd->env);
+     else
+         execv(binary, cmd->args);
+ 
++
+     virReportSystemError(errno,
+                          _("cannot execute binary %s"),
+                          cmd->args[0]);
+@@ -1081,6 +1121,35 @@
+ }
+ 
+ 
++
++/**
++ * virCommandSetSmackLabel:
++ * @cmd: the command to modify
++ * @label: the Smack label to use for the child process
++ *
++ * Saves a copy of @label to use when setting the Smack context
++ * label (write to /proc/self/attr/current ) after the child process has 
++ * been started. If Smack isn't compiled into libvirt, or if label is
++ * NULL, nothing will be done.
++ */
++void
++virCommandSetSmackLabel(virCommandPtr cmd,
++                          const char *label ATTRIBUTE_UNUSED)
++
++{
++      if(!cmd || cmd->has_error)
++	 return;
++      
++#if defined(WITH_SECDRIVER_SMACK)
++          VIR_FREE(cmd->smackLabel);
++	  if (VIR_STRDUP_QUIET(cmd->smackLabel, label) < 0)
++	      cmd->has_error = ENOMEM;
++#endif
++	 return;
++
++}
++
++
+ /**
+  * virCommandDaemonize:
+  * @cmd: the command to modify
+@@ -2269,6 +2338,7 @@
+     VIR_DEBUG("Command result %d, with PID %d",
+               ret, (int)cmd->pid);
+ 
++    /*Close the parent handshakeWait[1]/handshakeNotify[0]*/
+     for (i = 0; i < cmd->npassfd; i++) {
+         if (cmd->passfd[i].flags & VIR_COMMAND_PASS_FD_CLOSE_PARENT)
+             VIR_FORCE_CLOSE(cmd->passfd[i].fd);
+@@ -2619,6 +2689,9 @@
+ #if defined(WITH_SECDRIVER_APPARMOR)
+     VIR_FREE(cmd->appArmorProfile);
+ #endif
++#if defined(WITH_SECDRIVER_SMACK)	
++    VIR_FREE(cmd->smackLabel);
++#endif
+ 
+     VIR_FREE(cmd);
+ }
